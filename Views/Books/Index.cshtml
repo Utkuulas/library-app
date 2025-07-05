@@ -1,0 +1,93 @@
+﻿@model LibraryApp.Models.BookGenreViewModel
+
+@{
+    ViewData["Title"] = "Index";
+    var isAdmin = User.IsInRole("Admin");
+    var pipe = " | ";
+}
+
+<h1>Index</h1>
+
+@if (isAdmin)
+{
+    <p>
+        <a asp-action="Create">Add New Book</a>
+    </p>
+}
+
+
+<form asp-controller="Books" asp-action="Index">
+    <p>
+        <select asp-for="BookGenre" asp-items="Model.Genres">
+            <option value="">All</option>
+        </select>
+
+        <input type="text" asp-for="SearchString"/>
+        <input type="submit" value="Filter"/>
+    </p>
+</form>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Books![0].Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books![0].Author)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books![0].ISBN)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books![0].PublishedYear)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books![0].Genre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books![0].IsAvailable)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Books!) {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Author)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ISBN)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.PublishedYear)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Genre)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.IsAvailable)
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+					@if (isAdmin)
+					{
+                        @pipe<a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                        @pipe<a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+					}
+                    @if (item.IsAvailable && !isAdmin)
+                    {
+                        @pipe<a asp-action="Borrow" asp-route-id="@item.Id">Borrow</a>
+                    }
+                    @if (!item.IsAvailable && isAdmin)
+                    {
+                        @pipe<a asp-action="MarkAsReturned" asp-route-id="@item.Id">Mark As Returned</a>
+                    }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
