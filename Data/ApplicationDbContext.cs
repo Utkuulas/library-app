@@ -13,6 +13,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Book> Books { get; set; } = default!;
     public DbSet<BookLoan> BookLoan { get; set; } = default!;
+    public DbSet<Request> Request { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
