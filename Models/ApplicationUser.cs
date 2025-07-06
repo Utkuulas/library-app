@@ -5,5 +5,6 @@ namespace LibraryApp.Models
     public class ApplicationUser : IdentityUser
     {
         public virtual ICollection<Book>? Books { get; set; }
+        public virtual ICollection<BookLoan>? BookLoans { get; set; }
     }
 }
