@@ -15,5 +15,6 @@ namespace LibraryApp.Models
         public bool IsAvailable { get; set; }
         public string? UserId { get; set; }
         public virtual ApplicationUser? User { get; set; }
+        public virtual ICollection<BookLoan>? BookLoans { get; set; }
     }
 }
