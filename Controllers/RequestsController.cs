@@ -1,5 +1,6 @@
 ﻿using LibraryApp.Data;
 using LibraryApp.Models;
+using LibraryApp.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,16 +9,51 @@ namespace LibraryApp.Controllers
     public class RequestsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _config;
 
-        public RequestsController(ApplicationDbContext context)
+        public RequestsController(ApplicationDbContext context, IConfiguration config)
         {
             _context = context;
+            _config = config;
         }
 
         // GET: Requests
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int confirmationSwitch, string searchString)
         {
-            return View(await _context.Request.ToListAsync());
+            if (_context.Request == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Request' is null.");
+            }
+
+            var requests = from r in _context.Request
+                           select r;
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                requests = requests.Where(s => s.Book!.ISBN!.ToUpper().Contains(searchString.ToUpper()) ||
+                                                s.Book!.Title!.ToUpper().Contains(searchString.ToUpper()) ||
+                                                s.User!.Id.ToUpper().Contains(searchString.ToUpper()) ||
+                                                s.User!.Email!.ToUpper().Contains(searchString.ToUpper()));
+            }
+
+            switch (confirmationSwitch)
+            {
+                case 1:
+                    break;
+                case 2:
+                    requests = requests.Where(r => r.IsConfirmed == true);
+                    break;
+                case 3:
+                    requests = requests.Where(r => r.IsConfirmed == false);
+                    break;
+            }
+
+            var requestVM = new RequestViewModel
+            {
+                Requests = await requests.Include(r => r.Book).Include(r => r.User).ToListAsync()
+            };
+
+            return View(requestVM);
         }
 
         // GET: Requests/Details/5
@@ -142,6 +178,55 @@ namespace LibraryApp.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Confirm(int id)
+        {
+            //var request = await _context.Request.FindAsync(id);
+            var request = await _context.Request
+                .Include(r => r.Book)
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.Id == id);
+            if (request == null)
+            {
+                return NotFound();
+            }
+            request.IsConfirmed = true;
+            request.Book!.IsAvailable = false;
+            request.ConfirmationDate = DateTime.Now;
+            _context.Update(request);
+
+            var bookLoan = new BookLoan
+            {
+                Book = request.Book,
+                User = request.User,
+                LoanDate = (DateTime) request.ConfirmationDate,
+                DueDate = ((DateTime) request.ConfirmationDate).AddDays(Convert.ToDouble(_config["DueDateOffsetDays"]))
+            };
+            _context.BookLoan.Add(bookLoan);
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private async Task AddToBookLoans(Request request)
+        {
+            //var book = await _context.Books.FindAsync(request.Book!.Id);
+            if (request.Book != null)
+            {
+                request.Book.IsAvailable = false;
+                _context.Update(request.Book);
+
+                var bookLoan = new BookLoan
+                {
+                    Book = request.Book,
+                    User = request.User,
+                    LoanDate = DateTime.Now,
+                    DueDate = DateTime.Now.AddDays(Convert.ToDouble(_config["DueDateOffsetDays"]))
+                };
+                _context.BookLoan.Add(bookLoan);
+                await _context.SaveChangesAsync();
+            }
         }
 
         private bool RequestExists(int id)

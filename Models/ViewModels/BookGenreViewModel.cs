@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace LibraryApp.Models
+namespace LibraryApp.Models.ViewModels
 {
     public class BookGenreViewModel
     {

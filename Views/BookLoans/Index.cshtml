@@ -1,59 +1,77 @@
-﻿@model IEnumerable<LibraryApp.Models.BookLoan>
+﻿@model LibraryApp.Models.ViewModels.BookLoanViewModel
 
 @{
-    ViewData["Title"] = "Index";
+	ViewData["Title"] = "Book Loans";
+	var isAdmin = User.IsInRole("Admin");
 }
 
-<h1>Index</h1>
+<h1>Book Loans</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<form asp-controller="BookLoans" asp-action="Index">
+	<p>
+		<input type="text" asp-for="SearchString" />
+		<input type="submit" value="Filter" />
+	</p>
+</form>
 <table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.LoanDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DueDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ReturnDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Book)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.User)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.LoanDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DueDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ReturnDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Book.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.User.Email)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
+	<thead>
+		<tr>
+			<th>
+				@Html.DisplayNameFor(model => model.BookLoans![0].Id)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookLoans![0].Book!.ISBN)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookLoans![0].Book!.Title)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookLoans![0].User!.Email)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookLoans![0].LoanDate)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookLoans![0].DueDate)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookLoans![0].ReturnDate)
+			</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model.BookLoans!)
+		{
+			<tr>
+				<td>
+					@Html.DisplayFor(modelItem => item.Id)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.Book!.ISBN)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.Book!.Title)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.User!.Email)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.LoanDate)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.DueDate)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.ReturnDate)
+				</td>
+				<td>
+					@if (isAdmin && item.ReturnDate == null)
+					{
+						<a asp-action="MarkAsReturned" asp-route-id="@item.Id">Mark As Returned</a>
+					}
+				</td>
+			</tr>
+		}
+	</tbody>
 </table>
