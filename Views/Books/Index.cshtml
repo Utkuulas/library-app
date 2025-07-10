@@ -1,12 +1,13 @@
-﻿@model LibraryApp.Models.BookGenreViewModel
+﻿@using LibraryApp.Models.ViewModels
+@model BookGenreViewModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Books";
     var isAdmin = User.IsInRole("Admin");
     var pipe = " | ";
 }
 
-<h1>Index</h1>
+<h1>Books</h1>
 
 @if (isAdmin)
 {
@@ -80,11 +81,7 @@
 					}
                     @if (item.IsAvailable && !isAdmin)
                     {
-                        @pipe<a asp-action="Borrow" asp-route-id="@item.Id">Borrow</a>
-                    }
-                    @if (!item.IsAvailable && isAdmin)
-                    {
-                        @pipe<a asp-action="MarkAsReturned" asp-route-id="@item.Id">Mark As Returned</a>
+                        @pipe<a asp-action="GenerateRequest" asp-route-id="@item.Id">Borrow Request</a>
                     }
             </td>
         </tr>

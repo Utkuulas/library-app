@@ -18,10 +18,5 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-
-        builder.Entity<Book>()
-            .HasOne(b => b.User)
-            .WithMany(u => u.Books)
-            .HasForeignKey(b => b.UserId);
     }
 }

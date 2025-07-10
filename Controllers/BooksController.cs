@@ -1,5 +1,6 @@
 ﻿using LibraryApp.Data;
 using LibraryApp.Models;
+using LibraryApp.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -185,7 +186,7 @@ namespace LibraryApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Borrow(int id)
+        public async Task<IActionResult> GenerateRequest(int id)
         {
             var book = await _context.Books.FindAsync(id);
 
@@ -198,29 +199,23 @@ namespace LibraryApp.Controllers
 
             if(currentUserId != null)
             {
-                book.UserId = currentUserId;
-                book.IsAvailable = false;
-                _context.Update(book);
+                var isRequestSent = await _context.Request.AnyAsync(r => r.Id == book.Id && r.User!.Id == currentUserId);
+
+                if (isRequestSent)
+                {
+                    // If a request already exists, redirect to Index
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var request = new Request
+                {
+                    User = await _context.Users.FindAsync(currentUserId),
+                    Book = await _context.Books.FindAsync(id),
+                    IsConfirmed = false
+                };
+                _context.Add(request);
                 await _context.SaveChangesAsync();
             }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> MarkAsReturned(int id)
-        {
-            var book = await _context.Books.FindAsync(id);
-
-            if (book == null)
-            {
-                return NotFound();
-            }
-
-            book.UserId = null;
-            book.IsAvailable = true;
-            _context.Update(book);
-            await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }

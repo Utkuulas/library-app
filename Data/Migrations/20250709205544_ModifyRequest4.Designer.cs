@@ -4,6 +4,7 @@ using LibraryApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LibraryApp.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250709205544_ModifyRequest4")]
+    partial class ModifyRequest4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,7 +120,12 @@ namespace LibraryApp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Books");
                 });
@@ -139,7 +147,7 @@ namespace LibraryApp.Data.Migrations
                     b.Property<DateTime>("LoanDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("ReturnDate")
+                    b.Property<DateTime>("ReturnDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
@@ -320,6 +328,15 @@ namespace LibraryApp.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("LibraryApp.Models.Book", b =>
+                {
+                    b.HasOne("LibraryApp.Models.ApplicationUser", "User")
+                        .WithMany("Books")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("LibraryApp.Models.BookLoan", b =>
                 {
                     b.HasOne("LibraryApp.Models.Book", "Book")
@@ -406,6 +423,8 @@ namespace LibraryApp.Data.Migrations
             modelBuilder.Entity("LibraryApp.Models.ApplicationUser", b =>
                 {
                     b.Navigation("BookLoans");
+
+                    b.Navigation("Books");
                 });
 
             modelBuilder.Entity("LibraryApp.Models.Book", b =>

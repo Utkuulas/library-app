@@ -1,5 +1,6 @@
 ﻿using LibraryApp.Data;
 using LibraryApp.Models;
+using LibraryApp.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -18,10 +19,25 @@ namespace LibraryApp.Controllers
         }
 
         // GET: BookLoans
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
-            var applicationDbContext = _context.BookLoan.Include(b => b.Book);
-            return View(await applicationDbContext.ToListAsync());
+            var bookLoans = _context.BookLoan
+                .Include(b => b.Book)
+                .Include(b => b.User).AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                bookLoans = bookLoans.Where(s => s.Book!.Title!.ToUpper().Contains(searchString.ToUpper()) ||
+                                                  s.Book.ISBN!.ToUpper().Contains(searchString.ToUpper()) ||
+                                                  s.User!.UserName!.ToUpper().Contains(searchString.ToUpper()));
+            }
+
+            var bookLoanVM = new BookLoanViewModel
+            {
+                BookLoans = await bookLoans.ToListAsync(),
+            };
+
+            return View(bookLoanVM);
         }
 
         // GET: BookLoans/Details/5
@@ -151,6 +167,24 @@ namespace LibraryApp.Controllers
             }
 
             await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> MarkAsReturned(int id)
+        {
+            var bookLoan = await _context.BookLoan.Include(b => b.Book).FirstOrDefaultAsync(r => r.Id == id);
+
+            if (bookLoan == null)
+            {
+                return NotFound();
+            }
+
+            bookLoan.Book!.IsAvailable = true;
+            bookLoan.ReturnDate = DateTime.Now;
+            _context.Update(bookLoan.Book);
+            await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 
