@@ -3,6 +3,7 @@ using LibraryApp.Models;
 using LibraryApp.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace LibraryApp.Controllers
 {
@@ -27,6 +28,14 @@ namespace LibraryApp.Controllers
 
             var requests = from r in _context.Request
                            select r;
+
+            var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
+
+            if (currentUserRole != "Admin")
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                requests = requests.Where(r => r.User!.Id == currentUserId);
+            }
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -191,6 +200,12 @@ namespace LibraryApp.Controllers
             {
                 return NotFound();
             }
+
+            if (!request.Book!.IsAvailable)
+            {
+                return NotFound();
+            }
+
             request.IsConfirmed = true;
             request.Book!.IsAvailable = false;
             request.ConfirmationDate = DateTime.Now;
@@ -207,26 +222,6 @@ namespace LibraryApp.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private async Task AddToBookLoans(Request request)
-        {
-            //var book = await _context.Books.FindAsync(request.Book!.Id);
-            if (request.Book != null)
-            {
-                request.Book.IsAvailable = false;
-                _context.Update(request.Book);
-
-                var bookLoan = new BookLoan
-                {
-                    Book = request.Book,
-                    User = request.User,
-                    LoanDate = DateTime.Now,
-                    DueDate = DateTime.Now.AddDays(Convert.ToDouble(_config["DueDateOffsetDays"]))
-                };
-                _context.BookLoan.Add(bookLoan);
-                await _context.SaveChangesAsync();
-            }
         }
 
         private bool RequestExists(int id)

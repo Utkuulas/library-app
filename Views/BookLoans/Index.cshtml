@@ -8,10 +8,22 @@
 <h1>Book Loans</h1>
 
 <form asp-controller="BookLoans" asp-action="Index">
-	<p>
-		<input type="text" asp-for="SearchString" />
-		<input type="submit" value="Filter" />
-	</p>
+	<div class="d-flex row">
+		<div class="d-inline-flex col">
+			<select class="w-50 form-select" asp-for="ReturningSwitch" asp-items="Model.Returning">
+				<option value="1">All</option>
+				<option value="2">Returned</option>
+				<option value="3">Not Returned</option>
+			</select>
+
+			<div class="ms-2 input-group">
+				<input class="form-control" type="text" asp-for="SearchString" />
+				<input class="btn btn-primary" type="submit" value="Filter" />
+			</div>
+		</div>
+		<div class="col">
+		</div>
+	</div>
 </form>
 <table class="table">
 	<thead>
@@ -68,7 +80,7 @@
 				<td>
 					@if (isAdmin && item.ReturnDate == null)
 					{
-						<a asp-action="MarkAsReturned" asp-route-id="@item.Id">Mark As Returned</a>
+						<a class="btn btn-success" asp-action="MarkAsReturned" asp-route-id="@item.Id"><i class="bi bi-arrow-return-left"></i> Returned</a>
 					}
 				</td>
 			</tr>

@@ -2,89 +2,111 @@
 @model BookGenreViewModel
 
 @{
-    ViewData["Title"] = "Books";
-    var isAdmin = User.IsInRole("Admin");
-    var pipe = " | ";
+	ViewData["Title"] = "Books";
+	var isAdmin = User.IsInRole("Admin");
 }
 
 <h1>Books</h1>
 
-@if (isAdmin)
-{
-    <p>
-        <a asp-action="Create">Add New Book</a>
-    </p>
-}
-
-
 <form asp-controller="Books" asp-action="Index">
-    <p>
-        <select asp-for="BookGenre" asp-items="Model.Genres">
-            <option value="">All</option>
-        </select>
+	<div class="d-flex row">
+		<div class="d-inline-flex col">
+			<select class="w-50 form-select" asp-for="BookGenre" asp-items="Model.Genres">
+				<option value="">All</option>
+			</select>
 
-        <input type="text" asp-for="SearchString"/>
-        <input type="submit" value="Filter"/>
-    </p>
+			<div class="ms-2 input-group">
+			<input class="form-control" type="text" asp-for="SearchString" />
+			<input class="btn btn-primary" type="submit" value="Filter" />
+			</div>
+		</div>
+		@if (isAdmin)
+		{
+			<div class="col text-end">
+				<a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-square"></i> New Book</a>
+			</div>
+		}
+	</div>
 </form>
 <table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Books![0].Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Books![0].Author)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Books![0].ISBN)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Books![0].PublishedYear)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Books![0].Genre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Books![0].IsAvailable)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Books!) {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Title)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Author)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ISBN)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.PublishedYear)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Genre)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.IsAvailable)
-                </td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a>
-					@if (isAdmin)
-					{
-                        @pipe<a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
-                        @pipe<a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-					}
-                    @if (item.IsAvailable && !isAdmin)
-                    {
-                        @pipe<a asp-action="GenerateRequest" asp-route-id="@item.Id">Borrow Request</a>
-                    }
-            </td>
-        </tr>
-}
-    </tbody>
+	<thead>
+		<tr>
+			<th>
+				@Html.DisplayNameFor(model => model.BookListItems![0].Book!.Title)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookListItems![0].Book!.Author)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookListItems![0].Book!.ISBN)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookListItems![0].Book!.PublishedYear)
+			</th>
+			<th>
+				@Html.DisplayNameFor(model => model.BookListItems![0].Book!.Genre)
+			</th>
+			<th>
+				<div class="d-flex justify-content-center">
+					@Html.DisplayNameFor(model => model.BookListItems![0].Book!.IsAvailable)
+				</div>
+			</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model.BookListItems!)
+		{
+			<tr>
+				<td>
+					@Html.DisplayFor(modelItem => item.Book!.Title)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.Book!.Author)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.Book!.ISBN)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.Book!.PublishedYear)
+				</td>
+				<td>
+					@Html.DisplayFor(modelItem => item.Book!.Genre)
+				</td>
+				<td>
+					<div class="d-flex justify-content-center">
+						@if (item.Book!.IsAvailable)
+						{
+							<i class="bi bi-check-circle-fill text-success" title="Available"></i>
+						}
+						else
+						{
+							<i class="bi bi-x-circle-fill text-danger" title="Unavailable"></i>
+						}
+					</div>
+				</td>
+				<td>
+					<div class="d-flex justify-content-end">
+						<a class="btn btn-primary" asp-action="Details" asp-route-id="@item.Book!.Id"><i class="bi bi-stack"></i> Details</a>
+						@if (isAdmin)
+						{
+							<a class="ms-2 btn btn-success" asp-action="Edit" asp-route-id="@item.Book!.Id"><i class="bi bi-pencil-square"></i> Edit</a>
+							<a class="ms-2 btn btn-danger" asp-action="Delete" asp-route-id="@item.Book!.Id"><i class="bi bi-trash3"></i> Delete</a>
+						}
+						@if (!isAdmin)
+						{
+							@if (!item.IsRequestSent && item.Book.IsAvailable)
+							{
+								<a class="ms-2 btn btn-success" asp-action="GenerateRequest" asp-route-id="@item.Book!.Id"><i class="bi bi-save2"></i> Borrow</a>
+							}
+							else
+							{
+								<a class="ms-2 btn btn-secondary" disabled><i class="bi bi-save2"></i> Borrow</a>
+							}
+						}
+					</div>
+				</td>
+			</tr>
+		}
+	</tbody>
 </table>
