@@ -1,10 +1,12 @@
-﻿using LibraryApp.Data;
+﻿using Azure.Core;
+using LibraryApp.Data;
 using LibraryApp.Models;
 using LibraryApp.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace LibraryApp.Controllers
 {
@@ -19,17 +21,36 @@ namespace LibraryApp.Controllers
         }
 
         // GET: BookLoans
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(int returningSwitch, string searchString)
         {
             var bookLoans = _context.BookLoan
                 .Include(b => b.Book)
                 .Include(b => b.User).AsQueryable();
+
+            var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
+
+            if (currentUserRole != "Admin")
+            {
+                bookLoans = bookLoans.Where(bl => bl.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier));
+            }
 
             if (!string.IsNullOrEmpty(searchString))
             {
                 bookLoans = bookLoans.Where(s => s.Book!.Title!.ToUpper().Contains(searchString.ToUpper()) ||
                                                   s.Book.ISBN!.ToUpper().Contains(searchString.ToUpper()) ||
                                                   s.User!.UserName!.ToUpper().Contains(searchString.ToUpper()));
+            }
+
+            switch (returningSwitch)
+            {
+                case 1:
+                    break;
+                case 2:
+                    bookLoans = bookLoans.Where(r => r.ReturnDate != null);
+                    break;
+                case 3:
+                    bookLoans = bookLoans.Where(r => r.ReturnDate == null);
+                    break;
             }
 
             var bookLoanVM = new BookLoanViewModel

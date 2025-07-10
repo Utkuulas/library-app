@@ -47,10 +47,18 @@ namespace LibraryApp.Controllers
                 books = books.Where(x => x.Genre == bookGenre);
             }
 
+            var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             var bookGenreVM = new BookGenreViewModel
             {
                 Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
-                Books = await books.ToListAsync()
+                BookListItems = await books.Select(b => new BookListItemViewModel
+                {
+                    Book = b,
+                    IsRequestSent = currentUserRole == "Admin" ? false : _context.Request.Any(r => r.Book!.Id == b.Id && r.User!.Id == currentUserId && r.IsConfirmed == false)
+
+                }).ToListAsync(),
             };
 
             return View(bookGenreVM);
@@ -195,11 +203,16 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
+            if (!book.IsAvailable)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if(currentUserId != null)
             {
-                var isRequestSent = await _context.Request.AnyAsync(r => r.Id == book.Id && r.User!.Id == currentUserId);
+                var isRequestSent = await _context.Request.AnyAsync(r => r.Id == book.Id && r.User!.Id == currentUserId && !r.IsConfirmed && book.IsAvailable);
 
                 if (isRequestSent)
                 {
