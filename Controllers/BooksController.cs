@@ -4,8 +4,10 @@ using LibraryApp.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace LibraryApp.Controllers
 {
@@ -13,10 +15,12 @@ namespace LibraryApp.Controllers
     public class BooksController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public BooksController(ApplicationDbContext context)
+        public BooksController(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         // GET: Books
@@ -32,7 +36,7 @@ namespace LibraryApp.Controllers
                                             orderby b.Genre
                                             select b.Genre;
             var books = from b in _context.Books
-                         select b;
+                        select b;
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -73,7 +77,8 @@ namespace LibraryApp.Controllers
             }
 
             var book = await _context.Books
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .Include(b => b.Image)
+                .FirstOrDefaultAsync(b => b.Id == id);
             if (book == null)
             {
                 return NotFound();
@@ -86,7 +91,12 @@ namespace LibraryApp.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
-            return View();
+            if (TempData["FormData"] is string jsonData)
+            {
+                var book = JsonSerializer.Deserialize<Book>(jsonData);
+                return View(book);
+            }
+            return View(new Book());
         }
 
         // POST: Books/Create
@@ -95,10 +105,34 @@ namespace LibraryApp.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Author,ISBN,PublishedYear,Genre,IsAvailable")] Book book)
+        public async Task<IActionResult> Create([Bind("Id,Title,Author,ISBN,PublishedYear,Genre,IsAvailable")] Book book, string tempImagePath)
         {
             if (ModelState.IsValid)
             {
+                if (!string.IsNullOrEmpty(tempImagePath))
+                {
+                    var webRootPath = _env.WebRootPath;
+                    var fullPath = Path.Combine(webRootPath, tempImagePath.TrimStart('/'));
+
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        var fileBytes = System.IO.File.ReadAllBytes(fullPath);
+                        var fileExtension = Path.GetExtension(fullPath);
+                        var fileName = Path.GetFileName(fullPath);
+                        var contentType = GetContentType(fullPath);
+
+                        var image = new FileEntity
+                        {
+                            FileName = fileName,
+                            FileType = contentType,
+                            Data = fileBytes
+                        };
+
+                        _context.Files.Add(image);
+                        book.Image = image;
+                        ClearTempFile(fullPath);
+                    }
+                }
                 _context.Add(book);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -115,7 +149,10 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
-            var book = await _context.Books.FindAsync(id);
+            var book = await _context.Books
+                .Include(b => b.Image)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
             if (book == null)
             {
                 return NotFound();
@@ -169,7 +206,8 @@ namespace LibraryApp.Controllers
             }
 
             var book = await _context.Books
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(b => b.Id == id);
+
             if (book == null)
             {
                 return NotFound();
@@ -210,7 +248,7 @@ namespace LibraryApp.Controllers
 
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if(currentUserId != null)
+            if (currentUserId != null)
             {
                 var isRequestSent = await _context.Request.AnyAsync(r => r.Id == book.Id && r.User!.Id == currentUserId && !r.IsConfirmed && book.IsAvailable);
 
@@ -231,6 +269,118 @@ namespace LibraryApp.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadFile(int id, IFormFile file)
+        {
+            var book = await _context.Books
+                .Include(b => b.Image)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            if (file != null && file.Length > 0)
+            {
+                using var memoryStream = new MemoryStream();
+                await file.CopyToAsync(memoryStream);
+
+                var image = new FileEntity
+                {
+                    FileName = file.FileName,
+                    FileType = file.ContentType,
+                    Data = memoryStream.ToArray()
+                };
+
+                if (book.Image != null)
+                {
+                    _context.Files.Remove(book.Image);
+                }
+                else
+                {
+                    _context.Files.Add(image);
+                }
+
+
+                book.Image = image;
+                _context.Books.Update(book);
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction("Edit", "Books", new { id });
+            }
+
+            return RedirectToAction("Edit", "Books", new { id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadTempImage(IFormFile file, Book book)
+        {
+            TempData["FormData"] = JsonSerializer.Serialize(book);
+
+            if (file != null && file.Length > 0)
+            {
+                var tempPath = Path.Combine("wwwroot/temp", file.FileName);
+                if (System.IO.File.Exists(tempPath))
+                {
+                    var counter = 1;
+                    while (System.IO.File.Exists(tempPath))
+                    {
+                        // If the file already exists, append a number to the filename
+                        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
+                        var extension = Path.GetExtension(file.FileName);
+
+                        tempPath = Path.Combine("wwwroot/temp", $"{fileNameWithoutExtension}_{counter}{extension}");
+                        counter++;
+                    }
+                }
+
+                using (var fs = new FileStream(tempPath, FileMode.Create))
+                {
+                    TempData["TempImagePath"] = "/temp/" + Path.GetFileName(fs.Name);
+                    await file.CopyToAsync(fs);
+                }
+
+                return RedirectToAction(nameof(Create));
+            }
+
+            TempData["TempImagePath"] = null;
+            return RedirectToAction(nameof(Create));
+        }
+
+        public IActionResult Download(int id)
+        {
+            var file = _context.Files.Find(id);
+            if (file == null)
+                return NotFound();
+
+            return File(file.Data, file.FileType, file.FileName);
+        }
+
+        private string GetContentType(string path)
+        {
+            var provider = new FileExtensionContentTypeProvider();
+            if (!provider.TryGetContentType(path, out var contentType))
+            {
+                contentType = "application/octet-stream";
+            }
+            return contentType;
+        }
+
+        private void ClearTempFile(string fullPath)
+        {
+
+            if (System.IO.File.Exists(fullPath))
+            {
+
+                System.IO.File.Delete(fullPath);
+            }
+            else
+            {
+                Console.WriteLine("The file not found.");
+            }
         }
 
         private bool BookExists(int id)
