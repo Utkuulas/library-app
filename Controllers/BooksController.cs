@@ -273,7 +273,8 @@ namespace LibraryApp.Controllers
 
             if (file != null && file.Length > 0)
             {
-                var tempPath = Path.Combine("wwwroot/temp", file.FileName);
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var tempPath = Path.Combine("wwwroot/temp/", $"{currentUserId}_{file.FileName}");
 
                 if (System.IO.File.Exists(tempPath))
                 {
@@ -285,7 +286,7 @@ namespace LibraryApp.Controllers
                         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
                         var extension = Path.GetExtension(file.FileName);
 
-                        tempPath = Path.Combine("wwwroot/temp", $"{fileNameWithoutExtension}_{counter}{extension}");
+                        tempPath = Path.Combine("wwwroot/temp", $"{currentUserId}_{fileNameWithoutExtension}_{counter}{extension}");
                         counter++;
                     }
                 }
@@ -325,15 +326,18 @@ namespace LibraryApp.Controllers
             return contentType;
         }
 
-        private void ClearTempFile(string fullPath)
+        private void ClearTempFiles()
         {
-            if (System.IO.File.Exists(fullPath))
-            {
-                System.IO.File.Delete(fullPath);
-            }
-            else
-            {
-                Console.WriteLine("The file not found.");
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId != null) 
+            { 
+                foreach(var filePath in Directory.GetFiles($"{_env.WebRootPath}/temp"))
+                {
+                    if (filePath.Contains(currentUserId))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
             }
         }
 
@@ -360,7 +364,7 @@ namespace LibraryApp.Controllers
 
                     _context.Files.Add(image);
                     book.Image = image;
-                    ClearTempFile(fullPath);
+                    ClearTempFiles();
                 }
             }
         }
@@ -369,6 +373,18 @@ namespace LibraryApp.Controllers
         {
             return _context.Books.Any(e => e.Id == id);
         }
+
+        //private void ClearTempFile(string fullPath)
+        //{
+        //    if (System.IO.File.Exists(fullPath))
+        //    {
+        //        System.IO.File.Delete(fullPath);
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("The file not found.");
+        //    }
+        //}
 
         //[HttpPost]
         //public async Task<IActionResult> UploadFile(int id, IFormFile file)
