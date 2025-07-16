@@ -21,6 +21,7 @@
 
 		<form id="uploadImageForm" class="mt-2" asp-action="UploadTempImage" asp-controller="Books" enctype="multipart/form-data" method="post">
 			<input type="hidden" name="id" value="@Model.Id" />
+			<input type="hidden" name="process" value="create" />
 			<div class="form-group" style="width:78%;">
 				<label asp-for="Image.FileName">Select Image</label>
 				<input type="file" class="form-control" name="file" />
