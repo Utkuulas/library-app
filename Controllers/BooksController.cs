@@ -27,6 +27,8 @@ namespace LibraryApp.Controllers
         // GET: Books
         public async Task<IActionResult> Index(string bookGenre, string searchString)
         {
+            ClearTempFiles();
+
             if (_context.Books == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Book' is null.");
