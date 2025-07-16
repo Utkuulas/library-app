@@ -330,8 +330,9 @@ namespace LibraryApp.Controllers
 
         private void ClearTempFiles()
         {
+            var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId != null) 
+            if (currentUserId != null && currentUserRole == "Admin") 
             { 
                 foreach(var filePath in Directory.GetFiles($"{_env.WebRootPath}/temp"))
                 {
