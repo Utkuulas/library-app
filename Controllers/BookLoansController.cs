@@ -23,7 +23,7 @@ namespace LibraryApp.Controllers
         // GET: BookLoans
         public async Task<IActionResult> Index(int returningSwitch, string searchString)
         {
-            var bookLoans = _context.BookLoan
+            var bookLoans = _context.BookLoans
                 .Include(b => b.Book)
                 .Include(b => b.User).AsQueryable();
 
@@ -69,7 +69,7 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
-            var bookLoan = await _context.BookLoan
+            var bookLoan = await _context.BookLoans
                 .Include(b => b.Book)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (bookLoan == null)
@@ -112,7 +112,7 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
-            var bookLoan = await _context.BookLoan.FindAsync(id);
+            var bookLoan = await _context.BookLoans.FindAsync(id);
             if (bookLoan == null)
             {
                 return NotFound();
@@ -165,7 +165,7 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
-            var bookLoan = await _context.BookLoan
+            var bookLoan = await _context.BookLoans
                 .Include(b => b.Book)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (bookLoan == null)
@@ -181,10 +181,10 @@ namespace LibraryApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var bookLoan = await _context.BookLoan.FindAsync(id);
+            var bookLoan = await _context.BookLoans.FindAsync(id);
             if (bookLoan != null)
             {
-                _context.BookLoan.Remove(bookLoan);
+                _context.BookLoans.Remove(bookLoan);
             }
 
             await _context.SaveChangesAsync();
@@ -194,7 +194,7 @@ namespace LibraryApp.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> MarkAsReturned(int id)
         {
-            var bookLoan = await _context.BookLoan.Include(b => b.Book).FirstOrDefaultAsync(r => r.Id == id);
+            var bookLoan = await _context.BookLoans.Include(b => b.Book).FirstOrDefaultAsync(r => r.Id == id);
 
             if (bookLoan == null)
             {
@@ -211,7 +211,7 @@ namespace LibraryApp.Controllers
 
         private bool BookLoanExists(int id)
         {
-            return _context.BookLoan.Any(e => e.Id == id);
+            return _context.BookLoans.Any(e => e.Id == id);
         }
     }
 }

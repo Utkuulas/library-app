@@ -63,7 +63,7 @@ namespace LibraryApp.Controllers
                 BookListItems = await books.Select(b => new BookListItemViewModel
                 {
                     Book = b,
-                    IsRequestSent = currentUserRole == "Admin" ? false : _context.Request.Any(r => r.Book!.Id == b.Id && r.User!.Id == currentUserId && r.IsConfirmed == false)
+                    IsRequestSent = currentUserRole == "Admin" ? false : _context.Requests.Any(r => r.Book!.Id == b.Id && r.User!.Id == currentUserId && r.IsConfirmed == false)
 
                 }).ToListAsync(),
             };
@@ -110,7 +110,9 @@ namespace LibraryApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Book book, string tempImagePath)
         {
-            if (book != null)
+            ModelState.Remove(nameof(tempImagePath));
+
+            if (ModelState.IsValid)
             {
                 if (!string.IsNullOrEmpty(tempImagePath))
                 {
@@ -156,7 +158,9 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
-            if (book != null)
+            ModelState.Remove(nameof(tempImagePath));
+
+            if (ModelState.IsValid)
             {
                 try
                 {
@@ -216,6 +220,9 @@ namespace LibraryApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var relatedRequests = await _context.Requests.Where(r => r.Book!.Id == id).ToListAsync();
+            _context.Requests.RemoveRange(relatedRequests);
+
             var book = await _context.Books.FindAsync(id);
             if (book != null)
             {
@@ -244,7 +251,7 @@ namespace LibraryApp.Controllers
 
             if (currentUserId != null)
             {
-                var isRequestSent = await _context.Request.AnyAsync(r => r.Id == book.Id && r.User!.Id == currentUserId && !r.IsConfirmed && book.IsAvailable);
+                var isRequestSent = await _context.Requests.AnyAsync(r => r.Id == book.Id && r.User!.Id == currentUserId && !r.IsConfirmed && book.IsAvailable);
 
                 if (isRequestSent)
                 {

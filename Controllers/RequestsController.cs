@@ -21,12 +21,12 @@ namespace LibraryApp.Controllers
         // GET: Requests
         public async Task<IActionResult> Index(int confirmationSwitch, string searchString)
         {
-            if (_context.Request == null)
+            if (_context.Requests == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Request' is null.");
             }
 
-            var requests = from r in _context.Request
+            var requests = from r in _context.Requests
                            select r;
 
             var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
@@ -73,7 +73,7 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
-            var request = await _context.Request
+            var request = await _context.Requests
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (request == null)
             {
@@ -113,7 +113,7 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
-            var request = await _context.Request.FindAsync(id);
+            var request = await _context.Requests.FindAsync(id);
             if (request == null)
             {
                 return NotFound();
@@ -164,7 +164,7 @@ namespace LibraryApp.Controllers
                 return NotFound();
             }
 
-            var request = await _context.Request
+            var request = await _context.Requests
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (request == null)
             {
@@ -179,10 +179,10 @@ namespace LibraryApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var request = await _context.Request.FindAsync(id);
+            var request = await _context.Requests.FindAsync(id);
             if (request != null)
             {
-                _context.Request.Remove(request);
+                _context.Requests.Remove(request);
             }
 
             await _context.SaveChangesAsync();
@@ -192,7 +192,7 @@ namespace LibraryApp.Controllers
         public async Task<IActionResult> Confirm(int id)
         {
             //var request = await _context.Request.FindAsync(id);
-            var request = await _context.Request
+            var request = await _context.Requests
                 .Include(r => r.Book)
                 .Include(r => r.User)
                 .FirstOrDefaultAsync(r => r.Id == id);
@@ -218,7 +218,7 @@ namespace LibraryApp.Controllers
                 LoanDate = (DateTime) request.ConfirmationDate,
                 DueDate = ((DateTime) request.ConfirmationDate).AddDays(Convert.ToDouble(_config["DueDateOffsetDays"]))
             };
-            _context.BookLoan.Add(bookLoan);
+            _context.BookLoans.Add(bookLoan);
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
@@ -226,7 +226,7 @@ namespace LibraryApp.Controllers
 
         private bool RequestExists(int id)
         {
-            return _context.Request.Any(e => e.Id == id);
+            return _context.Requests.Any(e => e.Id == id);
         }
     }
 }
