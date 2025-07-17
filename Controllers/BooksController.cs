@@ -149,14 +149,14 @@ namespace LibraryApp.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,ISBN,PublishedYear,Genre,IsAvailable")] Book book, string tempImagePath)
+        public async Task<IActionResult> Edit(int id, Book book, string tempImagePath)
         {
             if (id != book.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            if (book != null)
             {
                 try
                 {
