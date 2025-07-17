@@ -108,9 +108,9 @@ namespace LibraryApp.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Author,ISBN,PublishedYear,Genre,IsAvailable")] Book book, string tempImagePath)
+        public async Task<IActionResult> Create(Book book, string tempImagePath)
         {
-            if (ModelState.IsValid)
+            if (book != null)
             {
                 if (!string.IsNullOrEmpty(tempImagePath))
                 {
