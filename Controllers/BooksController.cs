@@ -200,7 +200,7 @@ namespace LibraryApp.Controllers
             }
 
             var book = await _context.Books
-                .FirstOrDefaultAsync(b => b.Id == id);
+                .Include(b => b.Image).Where(b => b.Id == id).FirstOrDefaultAsync(); ;
 
             if (book == null)
             {

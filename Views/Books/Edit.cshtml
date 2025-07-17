@@ -76,21 +76,6 @@
     </div>
 </div>
 
-@* <script>
-    document.getElementById("uploadImageForm").addEventListener("submit", function (e) {
-        const editFormInputs = document.querySelectorAll("#editForm input");
-
-        editFormInputs.forEach(input => {
-            const hidden = document.createElement("input");
-            hidden.type = "hidden";
-            hidden.name = input.name;
-            hidden.value = input.value;
-
-            e.target.appendChild(hidden);
-        });
-    });
-</script> *@
-
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
