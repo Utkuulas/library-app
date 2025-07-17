@@ -32,6 +32,8 @@
 	<thead>
 		<tr>
 			<th>
+			</th>
+			<th>
 				@Html.DisplayNameFor(model => model.BookListItems![0].Book!.Title)
 			</th>
 			<th>
@@ -58,6 +60,18 @@
 		@foreach (var item in Model.BookListItems!)
 		{
 			<tr>
+				<td>
+					@if (item.Book!.Image != null)
+					{
+						<img src="data:@item.Book!.Image;base64,@Convert.ToBase64String(((byte[])item.Book!.Image!.Data!))"
+						class="img-thumbnail" style="height:120px; width:100px;" />
+					}
+					else
+					{
+						<img src="~/images/defaults/default-book-cover.png" alt="Default Book Cover"
+							 class="img-thumbnail" style="height:120px; width:100px;" />
+					}
+				</td>
 				<td>
 					@Html.DisplayFor(modelItem => item.Book!.Title)
 				</td>

@@ -38,7 +38,7 @@ namespace LibraryApp.Controllers
             IQueryable<string> genreQuery = from b in _context.Books
                                             orderby b.Genre
                                             select b.Genre;
-            var books = from b in _context.Books
+            var books = from b in _context.Books.Include(b => b.Image)
                         select b;
 
             if (!string.IsNullOrEmpty(searchString))
