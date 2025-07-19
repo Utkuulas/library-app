@@ -6,6 +6,7 @@ namespace LibraryApp.Models.ViewModels
     {
         public List<BookListItemViewModel>? BookListItems { get; set; }
         public SelectList? Genres { get; set; }
+        public PaginatedList<Book>? Pagination { get; set; }
         public string? BookGenre { get; set; }
         public string? SearchString { get; set; }
     }

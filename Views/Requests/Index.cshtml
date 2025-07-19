@@ -3,6 +3,7 @@
 
 @{
 	ViewData["Title"] = "Requests";
+	var isAdmin = User.IsInRole("Admin");
 }
 
 <h1>Requests</h1>
@@ -75,13 +76,16 @@
 					<div class="d-flex justify-content-end">
 						@if (!item.IsConfirmed)
 						{
-							if (item.Book!.IsAvailable)
+							if (isAdmin)
 							{
-								<a class="btn btn-success" asp-action="Confirm" asp-route-id="@item.Id"><i class="bi bi-check-lg"></i> OK</a>
-							}
-							else
-							{
-								<a class="ms-2 btn btn-secondary" disabled><i class="bi bi-check-lg"> OK</i></a>
+								if (item.Book!.IsAvailable)
+								{
+									<a class="btn btn-success" asp-action="Confirm" asp-route-id="@item.Id"><i class="bi bi-check-lg"></i> OK</a>
+								}
+								else
+								{
+									<a class="ms-2 btn btn-secondary" disabled><i class="bi bi-check-lg"> OK</i></a>
+								}
 							}
 							<a class="ms-2 btn btn-danger" asp-action="Delete" asp-route-id="@item.Id"><i class="bi bi-trash3"></i> Delete</a>
 						}

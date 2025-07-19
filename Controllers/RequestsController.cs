@@ -1,12 +1,14 @@
 ﻿using LibraryApp.Data;
 using LibraryApp.Models;
 using LibraryApp.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace LibraryApp.Controllers
 {
+    [Authorize]
     public class RequestsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -165,6 +167,8 @@ namespace LibraryApp.Controllers
             }
 
             var request = await _context.Requests
+                .Include(x => x.Book)
+                .Include(x => x.Book!.Image)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (request == null)
             {
@@ -189,6 +193,7 @@ namespace LibraryApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Confirm(int id)
         {
             //var request = await _context.Request.FindAsync(id);

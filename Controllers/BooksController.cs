@@ -25,9 +25,20 @@ namespace LibraryApp.Controllers
         }
 
         // GET: Books
-        public async Task<IActionResult> Index(string bookGenre, string searchString)
+        public async Task<IActionResult> Index(string bookGenre, string searchString, string sortOrder, string currentFilter, int? pageNumber)
         {
             ClearTempFiles();
+
+            // Add sorting parameters
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["CurrentGenre"] = bookGenre;
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["TitleSortParameter"] = sortOrder == "title" ? "title_desc" : "title";
+            ViewData["AuthorSortParameter"] = sortOrder == "author" ? "author_desc" : "author";
+            ViewData["ISBNSortParameter"] = sortOrder == "isbn" ? "isbn_desc" : "isbn";
+            ViewData["PublishedYearSortParameter"] = sortOrder == "published_year" ? "published_year_desc" : "published_year";
+            ViewData["GenreSortParameter"] = sortOrder == "genre" ? "genre_desc" : "genre";
+            ViewData["IsAvailableSortParameter"] = sortOrder == "is_available" ? "is_available_desc" : "is_available";
 
             if (_context.Books == null)
             {
@@ -41,6 +52,7 @@ namespace LibraryApp.Controllers
             var books = from b in _context.Books.Include(b => b.Image)
                         select b;
 
+            // Add searching filters
             if (!string.IsNullOrEmpty(searchString))
             {
                 books = books.Where(s => s.Title!.ToUpper().Contains(searchString.ToUpper()) ||
@@ -54,18 +66,69 @@ namespace LibraryApp.Controllers
                 books = books.Where(x => x.Genre == bookGenre);
             }
 
+            switch (sortOrder)
+            {
+                case "title":
+                    books = books.OrderBy(s => s.Title);
+                    break;
+                case "title_desc":
+                    books = books.OrderByDescending(s => s.Title);
+                    break;
+                case "author":
+                    books = books.OrderBy(s => s.Author);
+                    break;
+                case "isbn":
+                    books = books.OrderBy(s => s.ISBN);
+                    break;
+                case "isbn_desc":
+                    books = books.OrderByDescending(s => s.ISBN);
+                    break;
+                case "author_desc":
+                    books = books.OrderByDescending(s => s.Author);
+                    break;
+                case "published_year":
+                    books = books.OrderBy(s => s.PublishedYear);
+                    break;
+                case "published_year_desc":
+                    books = books.OrderByDescending(s => s.PublishedYear);
+                    break;
+                case "genre":
+                    books = books.OrderBy(s => s.Genre);
+                    break;
+                case "genre_desc":
+                    books = books.OrderByDescending(s => s.Genre);
+                    break;
+                case "is_available":
+                    books = books.OrderBy(s => s.IsAvailable);
+                    break;
+                case "is_available_desc":
+                    books = books.OrderByDescending(s => s.PublishedYear);
+                    break;
+                default:
+                    books = books.OrderBy(s => s.Id);
+                    break;
+            }
+
+            // Add pagination
+            int pageSize = 3;
+            var paginatedBooks = await PaginatedList<Book>.CreateAsync(books, pageNumber ?? 1, pageSize);
+
             var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+
 
             var bookGenreVM = new BookGenreViewModel
             {
                 Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
-                BookListItems = await books.Select(b => new BookListItemViewModel
+                BookListItems = paginatedBooks.Select(b => new BookListItemViewModel
                 {
                     Book = b,
                     IsRequestSent = currentUserRole == "Admin" ? false : _context.Requests.Any(r => r.Book!.Id == b.Id && r.User!.Id == currentUserId && r.IsConfirmed == false)
-
-                }).ToListAsync(),
+                }).ToList(),
+                Pagination = paginatedBooks,
+                SearchString = searchString,
+                BookGenre = bookGenre
             };
 
             return View(bookGenreVM);
