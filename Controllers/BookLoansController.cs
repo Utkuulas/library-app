@@ -5,6 +5,7 @@ using LibraryApp.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -21,8 +22,16 @@ namespace LibraryApp.Controllers
         }
 
         // GET: BookLoans
-        public async Task<IActionResult> Index(int returningSwitch, string searchString)
+        public async Task<IActionResult> Index(int returningSwitch, string searchString, string currentFilter, string sortOrder, int? pageNumber)
         {
+            if (_context.BookLoans == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.BookLoan' is null.");
+            }
+
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["LoanDateSortParameter"] = sortOrder == "date" ? "date_desc" : "date";
+
             var bookLoans = _context.BookLoans
                 .Include(b => b.Book)
                 .Include(b => b.User).AsQueryable();
@@ -53,9 +62,36 @@ namespace LibraryApp.Controllers
                     break;
             }
 
+            switch (sortOrder)
+            {
+                case "date":
+                    bookLoans = bookLoans.OrderBy(b => b.LoanDate);
+                    break;
+                case "date_desc":
+                    bookLoans = bookLoans.OrderByDescending(b => b.LoanDate);
+                    break;
+                default:
+                    bookLoans = bookLoans.OrderBy(b => b.Id);
+                    break;
+            }
+
+            int pageSize = 10;
+            var paginatedBookLoans = await PaginatedList<BookLoan>.CreateAsync(bookLoans, pageNumber ?? 1, pageSize);
+
             var bookLoanVM = new BookLoanViewModel
             {
-                BookLoans = await bookLoans.ToListAsync(),
+                BookLoans = paginatedBookLoans.Select(b => new BookLoan
+                {
+                    Id = b.Id,
+                    Book = b.Book,
+                    LoanDate = b.LoanDate,
+                    DueDate = b.DueDate,
+                    ReturnDate = b.ReturnDate,
+                    User = b.User
+                }).ToList(),
+                Pagination = paginatedBookLoans,
+                ReturningSwitch = returningSwitch,
+                SearchString = searchString
             };
 
             return View(bookLoanVM);

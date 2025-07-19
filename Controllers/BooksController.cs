@@ -25,7 +25,7 @@ namespace LibraryApp.Controllers
         }
 
         // GET: Books
-        public async Task<IActionResult> Index(string bookGenre, string searchString, string sortOrder, string currentFilter, int? pageNumber)
+        public async Task<IActionResult> Index(string bookGenre, string searchString, string currentFilter, string sortOrder, int? pageNumber)
         {
             ClearTempFiles();
 
@@ -69,54 +69,52 @@ namespace LibraryApp.Controllers
             switch (sortOrder)
             {
                 case "title":
-                    books = books.OrderBy(s => s.Title);
+                    books = books.OrderBy(b => b.Title);
                     break;
                 case "title_desc":
-                    books = books.OrderByDescending(s => s.Title);
+                    books = books.OrderByDescending(b => b.Title);
                     break;
                 case "author":
-                    books = books.OrderBy(s => s.Author);
+                    books = books.OrderBy(b => b.Author);
                     break;
                 case "isbn":
-                    books = books.OrderBy(s => s.ISBN);
+                    books = books.OrderBy(b => b.ISBN);
                     break;
                 case "isbn_desc":
-                    books = books.OrderByDescending(s => s.ISBN);
+                    books = books.OrderByDescending(b => b.ISBN);
                     break;
                 case "author_desc":
-                    books = books.OrderByDescending(s => s.Author);
+                    books = books.OrderByDescending(b => b.Author);
                     break;
                 case "published_year":
-                    books = books.OrderBy(s => s.PublishedYear);
+                    books = books.OrderBy(b => b.PublishedYear);
                     break;
                 case "published_year_desc":
-                    books = books.OrderByDescending(s => s.PublishedYear);
+                    books = books.OrderByDescending(b => b.PublishedYear);
                     break;
                 case "genre":
-                    books = books.OrderBy(s => s.Genre);
+                    books = books.OrderBy(b => b.Genre);
                     break;
                 case "genre_desc":
-                    books = books.OrderByDescending(s => s.Genre);
+                    books = books.OrderByDescending(b => b.Genre);
                     break;
                 case "is_available":
-                    books = books.OrderBy(s => s.IsAvailable);
+                    books = books.OrderBy(b => b.IsAvailable);
                     break;
                 case "is_available_desc":
-                    books = books.OrderByDescending(s => s.PublishedYear);
+                    books = books.OrderByDescending(b => b.IsAvailable);
                     break;
                 default:
-                    books = books.OrderBy(s => s.Id);
+                    books = books.OrderBy(b => b.Id);
                     break;
             }
 
             // Add pagination
-            int pageSize = 3;
+            int pageSize = 5;
             var paginatedBooks = await PaginatedList<Book>.CreateAsync(books, pageNumber ?? 1, pageSize);
 
             var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-
 
             var bookGenreVM = new BookGenreViewModel
             {

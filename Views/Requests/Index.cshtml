@@ -45,7 +45,12 @@
 				@Html.DisplayNameFor(model => model.Requests![0].User!.Email)
 			</th>
 			<th>
-				@Html.DisplayNameFor(model => model.Requests![0].ConfirmationDate)
+				<a asp-action="Index"
+				   asp-route-sortOrder="@ViewData["ConfirmationDateSortParameter"]"
+				   asp-route-searchString="@Model.SearchString"
+				   asp-route-confirmationSwitch="@Model.Confirmation">
+					@Html.DisplayNameFor(model => model.Requests![0].ConfirmationDate)
+				</a>
 			</th>
 			<th></th>
 		</tr>
@@ -95,3 +100,74 @@
 		}
 	</tbody>
 </table>
+
+@if (Model.Pagination!.TotalPages > 1)
+{
+	<nav>
+		<ul class="pagination justify-content-center">
+
+			@if (Model.Pagination.HasPreviousPage)
+			{
+				<li class="page-item">
+					<a class="page-link"
+					   asp-action="Index"
+					   asp-route-pageNumber="@(Model.Pagination.PageIndex - 1)"
+					   asp-route-sortOrder="@ViewData["CurrentSort"]"
+					   asp-route-searchString="@Model.SearchString"
+					   asp-route-confirmationSwitch="@Model.Confirmation">
+						Previous
+					</a>
+				</li>
+			}
+			else
+			{
+				<li class="page-item disabled">
+					<span class="page-link">Previous</span>
+				</li>
+			}
+
+			@for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+			{
+				if (i == Model.Pagination.PageIndex)
+				{
+					<li class="page-item active">
+						<span class="page-link">@i</span>
+					</li>
+				}
+				else
+				{
+					<li class="page-item">
+						<a class="page-link"
+						   asp-action="Index"
+						   asp-route-pageNumber="@i"
+						   asp-route-sortOrder="@ViewData["CurrentSort"]"
+						   asp-route-searchString="@Model.SearchString"
+						   asp-route-confirmationSwitch="@Model.Confirmation">
+							@i
+						</a>
+					</li>
+				}
+			}
+
+			@if (Model.Pagination.HasNextPage)
+			{
+				<li class="page-item">
+					<a class="page-link"
+					   asp-action="Index"
+					   asp-route-pageNumber="@(Model.Pagination.PageIndex + 1)"
+					   asp-route-sortOrder="@ViewData["CurrentSort"]"
+					   asp-route-searchString="@Model.SearchString"
+					   asp-route-confirmationSwitch="@Model.Confirmation">
+						Next
+					</a>
+				</li>
+			}
+			else
+			{
+				<li class="page-item disabled">
+					<span class="page-link">Next</span>
+				</li>
+			}
+		</ul>
+	</nav>
+}

@@ -21,14 +21,19 @@ namespace LibraryApp.Controllers
         }
 
         // GET: Requests
-        public async Task<IActionResult> Index(int confirmationSwitch, string searchString)
+        public async Task<IActionResult> Index(int confirmationSwitch, string searchString, string currentFilter, string sortOrder, int? pageNumber)
         {
             if (_context.Requests == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Request' is null.");
             }
 
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["ConfirmationDateSortParameter"] = sortOrder == "date" ? "date_desc" : "date";
+
             var requests = from r in _context.Requests
+                           .Include(r => r.Book)
+                           .Include(r => r.User)
                            select r;
 
             var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
@@ -59,9 +64,35 @@ namespace LibraryApp.Controllers
                     break;
             }
 
+            switch (sortOrder)
+            {
+                case "date":
+                    requests = requests.OrderBy(r => r.ConfirmationDate);
+                    break;
+                case "date_desc":
+                    requests = requests.OrderByDescending(r => r.ConfirmationDate);
+                    break;
+                default:
+                    requests = requests.OrderBy(r => r.Id);
+                    break;
+            }
+
+            int pageSize = 10;
+            var paginatedRequests = await PaginatedList<Request>.CreateAsync(requests, pageNumber ?? 1, pageSize);
+
             var requestVM = new RequestViewModel
             {
-                Requests = await requests.Include(r => r.Book).Include(r => r.User).ToListAsync()
+                Requests = paginatedRequests.Select(r => new Request
+                {
+                    Id = r.Id,
+                    Book = r.Book,
+                    User = r.User,
+                    ConfirmationDate = r.ConfirmationDate,
+                    IsConfirmed = r.IsConfirmed,
+                }).ToList(),
+                Pagination = paginatedRequests,
+                SearchString = searchString,
+                ConfirmationSwitch = confirmationSwitch
             };
 
             return View(requestVM);
@@ -220,8 +251,8 @@ namespace LibraryApp.Controllers
             {
                 Book = request.Book,
                 User = request.User,
-                LoanDate = (DateTime) request.ConfirmationDate,
-                DueDate = ((DateTime) request.ConfirmationDate).AddDays(Convert.ToDouble(_config["DueDateOffsetDays"]))
+                LoanDate = (DateTime)request.ConfirmationDate,
+                DueDate = ((DateTime)request.ConfirmationDate).AddDays(Convert.ToDouble(_config["DueDateOffsetDays"]))
             };
             _context.BookLoans.Add(bookLoan);
 

@@ -41,7 +41,12 @@
 				@Html.DisplayNameFor(model => model.BookLoans![0].User!.Email)
 			</th>
 			<th>
+				<a asp-action="Index"
+				   asp-route-sortOrder="@ViewData["LoanDateSortParameter"]"
+				   asp-route-searchString="@Model.SearchString"
+				   asp-route-returningSwitch="@Model.Returning">
 				@Html.DisplayNameFor(model => model.BookLoans![0].LoanDate)
+				</a>
 			</th>
 			<th>
 				@Html.DisplayNameFor(model => model.BookLoans![0].DueDate)
@@ -87,3 +92,74 @@
 		}
 	</tbody>
 </table>
+
+@if (Model.Pagination!.TotalPages > 1)
+{
+	<nav>
+		<ul class="pagination justify-content-center">
+
+			@if (Model.Pagination.HasPreviousPage)
+			{
+				<li class="page-item">
+					<a class="page-link"
+					   asp-action="Index"
+					   asp-route-pageNumber="@(Model.Pagination.PageIndex - 1)"
+					   asp-route-sortOrder="@ViewData["CurrentSort"]"
+					   asp-route-searchString="@Model.SearchString"
+					   asp-route-returningSwitch="@Model.Returning">
+						Previous
+					</a>
+				</li>
+			}
+			else
+			{
+				<li class="page-item disabled">
+					<span class="page-link">Previous</span>
+				</li>
+			}
+
+			@for (int i = 1; i <= Model.Pagination.TotalPages; i++)
+			{
+				if (i == Model.Pagination.PageIndex)
+				{
+					<li class="page-item active">
+						<span class="page-link">@i</span>
+					</li>
+				}
+				else
+				{
+					<li class="page-item">
+						<a class="page-link"
+						   asp-action="Index"
+						   asp-route-pageNumber="@i"
+						   asp-route-sortOrder="@ViewData["CurrentSort"]"
+						   asp-route-searchString="@Model.SearchString"
+						   asp-route-returningSwitch="@Model.Returning">
+							@i
+						</a>
+					</li>
+				}
+			}
+
+			@if (Model.Pagination.HasNextPage)
+			{
+				<li class="page-item">
+					<a class="page-link"
+					   asp-action="Index"
+					   asp-route-pageNumber="@(Model.Pagination.PageIndex + 1)"
+					   asp-route-sortOrder="@ViewData["CurrentSort"]"
+					   asp-route-searchString="@Model.SearchString"
+					   asp-route-returningSwitch="@Model.Returning">
+						Next
+					</a>
+				</li>
+			}
+			else
+			{
+				<li class="page-item disabled">
+					<span class="page-link">Next</span>
+				</li>
+			}
+		</ul>
+	</nav>
+}

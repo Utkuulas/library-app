@@ -6,6 +6,7 @@ namespace LibraryApp.Models.ViewModels
     {
         public List<Request>? Requests { get; set; }
         public SelectList? Confirmation { get; set; }
+        public PaginatedList<Request>? Pagination { get; set; }
         public int ConfirmationSwitch { get; set; }
         public string? SearchString { get; set; }
     }
