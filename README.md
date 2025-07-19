@@ -104,3 +104,19 @@ The application should launch in your browser.
 - Default Identity structure is used for user management.
 - All sensitive settings (e.g., SMTP credentials) should be stored securely in a production environment (e.g., environment variables or user secrets).
 - Consider seeding initial book and user data for demo/testing purposes.
+
+---
+
+## ▶️ Demo
+
+### 1. Registration & Confirmation
+
+<img height="500" src="assets/demo/1.gif" alt="demo-1" />
+
+### 2. Member Features
+
+<img height="500" src="assets/demo/2.gif" alt="demo-2" />
+
+### 3. Admin Features
+
+<img height="500" src="assets/demo/3.gif" alt="demo-3" />
