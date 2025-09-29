@@ -43,7 +43,7 @@ Users who register with email addresses listed under `AdminSettings:AdminEmails`
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/LibraryApp.git
+git clone https://github.com/Utkuulas/LibraryApp.git
 cd LibraryApp
 ```
 ### 2. Clone the Repository
